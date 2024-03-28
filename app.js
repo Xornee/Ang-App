@@ -1,20 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const wordPairs = {
-    profound: "superficial",
-    purposeful: "accidental",
-    accurate: "inaccurate",
-    minor: "major",
-    "left-wing": "right-wing",
-    underestimate: "overestimate",
-    atheist: "believer",
-    "attack (noun)": "defence",
-    marriage: "divorce",
-    ordinary: "extraordinary",
-    extrovert: "introvert",
-    ancient: "contemporary",
-    encourage: "discourage",
-    encrypt: "decrypt",
-    "even number": "odd number",
+  // Initial set of word pairs
+  const initialWordPairs = {
+    "profound (przeciwienstwo)": "superficial",
+    "purposeful (przeciwienstwo)": "accidental",
+    "accurate (przeciwienstwo)": "inaccurate",
+    "minor (przeciwienstwo)": "major",
+    "left-wing (przeciwienstwo)": "right-wing",
+    "underestimate (przeciwienstwo)": "overestimate",
+    "atheist (przeciwienstwo)": "believer",
+    "attack (noun) (przeciwienstwo)": "defence",
+    "marriage (przeciwienstwo)": "divorce",
+    "ordinary (przeciwienstwo)": "extraordinary",
+    "extrovert (przeciwienstwo)": "introvert",
+    "ancient (przeciwienstwo)": "contemporary",
+    "encourage (przeciwienstwo)": "discourage",
+    "encrypt (przeciwienstwo)": "decrypt",
+    "even number (przeciwienstwo)": "odd number",
     czoło: "forehead",
     pacha: "armpit",
     paznokieć: "nail",
@@ -530,31 +531,89 @@ document.addEventListener("DOMContentLoaded", () => {
     "najbliższy krewny": "next of kin",
   };
 
+  let wordPairs =
+    JSON.parse(localStorage.getItem("wordPairs")) || initialWordPairs;
   let currentKey = "";
+  let correctCount = 0;
+  let incorrectCount = 0;
 
+  // Function to save word pairs to local storage
+  function saveWordPairs() {
+    localStorage.setItem("wordPairs", JSON.stringify(wordPairs));
+  }
+
+  // Function to update stats on the page
+  function updateStats() {
+    document.getElementById(
+      "correctCount"
+    ).textContent = `Correct: ${correctCount}`;
+    document.getElementById(
+      "incorrectCount"
+    ).textContent = `Incorrect: ${incorrectCount}`;
+    document.getElementById("totalLeft").textContent = `Total left: ${
+      Object.keys(wordPairs).length
+    }`;
+  }
+
+  // Function to load a random word pair
   function loadRandomWord() {
     const keys = Object.keys(wordPairs);
+    if (keys.length === 0) {
+      document.getElementById("question").textContent =
+        "Well done! All words completed.";
+      document.getElementById("answer").style.display = "none";
+      document.getElementById("check").style.display = "none";
+      return;
+    }
     currentKey = keys[Math.floor(Math.random() * keys.length)];
     document.getElementById("question").textContent = currentKey;
     document.getElementById("answer").value = "";
     document.getElementById("result").textContent = "";
+    updateStats();
   }
 
+  // Event listener for the check button
   document.getElementById("check").addEventListener("click", () => {
     const userAnswer = document.getElementById("answer").value.trim();
     const correctAnswer = wordPairs[currentKey];
     if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+      correctCount++;
+      delete wordPairs[currentKey]; // Remove the key-pair from the list
+      saveWordPairs(); // Update localStorage immediately
       document.getElementById("result").textContent = "Correct!";
       document.getElementById("result").className = "correct";
     } else {
+      incorrectCount++;
       document.getElementById(
         "result"
       ).textContent = `Incorrect! The correct answer is ${correctAnswer}.`;
       document.getElementById("result").className = "incorrect";
     }
+    updateStats();
   });
 
-  document.getElementById("next").addEventListener("click", loadRandomWord);
+  // Event listener for the next button
+  document.getElementById("next").addEventListener("click", () => {
+    if (document.getElementById("answer").value.trim() === "") {
+      incorrectCount++; // Count as incorrect if no answer is provided
+      updateStats();
+    }
+    loadRandomWord();
+  });
 
+  // Event listener for the restart button
+  document.getElementById("restart").addEventListener("click", () => {
+    // Clear local storage and reset variables
+    localStorage.removeItem("wordPairs");
+    wordPairs = { ...initialWordPairs }; // Reset to initial state
+    correctCount = 0;
+    incorrectCount = 0;
+    saveWordPairs(); // Save the reset word pairs to local storage
+    updateStats();
+    loadRandomWord(); // Load the first word again
+    location.reload();
+  });
+
+  saveWordPairs();
   loadRandomWord(); // Initial load
 });
